@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using WebApi_ASPNETCore.DTOs.Funcionario;
+using WebApi_ASPNETCore.Enums;
 using WebApi_ASPNETCore.Models;
 using Xunit;
 
@@ -18,10 +19,10 @@ public class FuncionarioApiTests
     }
 
     [Fact]
-    public async Task GetFuncionario_QuandoNaoExiste_DeveRetornar404()
+    public async Task GetFuncionarioById_QuandoNaoExiste_DeveRetornarNotFound()
     {
-        var response = await _client.GetAsync(
-            "/api/Funcionario/999");
+        var response =
+            await _client.GetAsync("/api/funcionarios/999");
 
         Assert.Equal(
             HttpStatusCode.NotFound,
@@ -29,52 +30,67 @@ public class FuncionarioApiTests
     }
 
     [Fact]
-    public async Task PostFuncionario_ComDadosValidos_DeveRetornar201()
+    public async Task CreateFuncionario_ComDadosValidos_DeveRetornarCreated()
     {
         var request = new FuncionarioRequest
         {
             Nome = "Anderson",
-            Sobrenome = "Domingos",
+            Sobrenome = "Teste",
+            Departamento = (DepartamentoEnum)1,
+            Turno = (TurnoEnum)1,
             Ativo = true
         };
 
-        var response = await _client.PostAsJsonAsync(
-            "/api/Funcionario",
-            request);
+        var response =
+            await _client.PostAsJsonAsync(
+                "/api/funcionarios",
+                request);
 
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
 
-        var resultado = await response.Content
-            .ReadFromJsonAsync<
-                ServiceResponse<FuncionarioResponse>>();
+        var resultado =
+            await response.Content
+                .ReadFromJsonAsync<ServiceResponse<FuncionarioResponse>>();
 
         Assert.NotNull(resultado);
         Assert.True(resultado.Sucesso);
         Assert.NotNull(resultado.Dados);
         Assert.True(resultado.Dados.Id > 0);
-        Assert.Equal(
-            "Anderson",
-            resultado.Dados.Nome);
+        Assert.Equal("Anderson", resultado.Dados.Nome);
     }
 
     [Fact]
-    public async Task PostFuncionario_ComNomeInvalido_DeveRetornar400()
+    public async Task CreateFuncionario_ComNomeInvalido_DeveRetornarBadRequest()
     {
         var request = new FuncionarioRequest
         {
             Nome = "",
-            Sobrenome = "Domingos",
+            Sobrenome = "Teste",
+            Departamento = (DepartamentoEnum)1,
+            Turno = (TurnoEnum)1,
             Ativo = true
         };
 
-        var response = await _client.PostAsJsonAsync(
-            "/api/Funcionario",
-            request);
+        var response =
+            await _client.PostAsJsonAsync(
+                "/api/funcionarios",
+                request);
 
         Assert.Equal(
             HttpStatusCode.BadRequest,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task HealthCheck_DeveRetornarOk()
+    {
+        var response =
+            await _client.GetAsync("/health");
+
+        Assert.Equal(
+            HttpStatusCode.OK,
             response.StatusCode);
     }
 }

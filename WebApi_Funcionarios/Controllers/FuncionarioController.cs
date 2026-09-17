@@ -6,7 +6,7 @@ using WebApi_ASPNETCore.Service.FuncionarioService;
 namespace WebApi_ASPNETCore.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/funcionarios")]
 public class FuncionarioController : ControllerBase
 {
     private readonly IFuncionarioInterface _funcionarioService;

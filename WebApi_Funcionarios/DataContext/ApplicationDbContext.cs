@@ -1,19 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApi_ASPNETCore.Models;
 
-namespace WebApi_ASPNETCore.DataContext
-{
-    public class ApplicationDbContext : DbContext
-    {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-            
-        }
+namespace WebApi_ASPNETCore.DataContext;
 
-        public DbSet<FuncionarioModel> Funcionarios {get; set;}
-    }
+public class ApplicationDbContext(
+    DbContextOptions<ApplicationDbContext> options)
+    : DbContext(options)
+{
+    public DbSet<FuncionarioModel> Funcionarios =>
+        Set<FuncionarioModel>();
 }
