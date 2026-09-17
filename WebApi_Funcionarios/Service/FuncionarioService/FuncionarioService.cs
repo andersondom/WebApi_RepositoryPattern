@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebApi_ASPNETCore.DataContext;
+using WebApi_ASPNETCore.DTOs.Funcionario;
 using WebApi_ASPNETCore.Models;
 
 namespace WebApi_ASPNETCore.Service.FuncionarioService;
@@ -13,13 +14,14 @@ public class FuncionarioService : IFuncionarioInterface
         _context = context;
     }
 
-    public async Task<ServiceResponse<List<FuncionarioModel>>> GetFuncionarios()
+    public async Task<ServiceResponse<List<FuncionarioResponse>>> GetFuncionarios()
     {
         var funcionarios = await _context.Funcionarios
             .AsNoTracking()
+            .Select(f => ToResponse(f))
             .ToListAsync();
 
-        return new ServiceResponse<List<FuncionarioModel>>
+        return new ServiceResponse<List<FuncionarioResponse>>
         {
             Dados = funcionarios,
             Mensagem = funcionarios.Count == 0
@@ -28,44 +30,48 @@ public class FuncionarioService : IFuncionarioInterface
         };
     }
 
-    public async Task<ServiceResponse<FuncionarioModel>> GetFuncionariosById(int id)
+    public async Task<ServiceResponse<FuncionarioResponse>> GetFuncionariosById(int id)
     {
         var funcionario = await _context.Funcionarios
             .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == id);
 
         if (funcionario is null)
-        {
-            return new ServiceResponse<FuncionarioModel>
-            {
-                Dados = null,
-                Mensagem = "Funcionário não foi encontrado!",
-                Sucesso = false
-            };
-        }
+            return FuncionarioNaoEncontrado();
 
-        return new ServiceResponse<FuncionarioModel>
+        return new ServiceResponse<FuncionarioResponse>
         {
-            Dados = funcionario,
+            Dados = ToResponse(funcionario),
             Mensagem = "Funcionário encontrado!"
         };
     }
 
-    public async Task<ServiceResponse<List<FuncionarioModel>>> CreateFuncionarios(
-        FuncionarioModel modelCreate)
+    public async Task<ServiceResponse<FuncionarioResponse>> CreateFuncionarios(
+        FuncionarioRequest request)
     {
-        await _context.Funcionarios.AddAsync(modelCreate);
+        var funcionario = new FuncionarioModel
+        {
+            Nome = request.Nome.Trim(),
+            Sobrenome = request.Sobrenome.Trim(),
+            Departamento = request.Departamento,
+            Turno = request.Turno,
+            Ativo = request.Ativo,
+            DataDeCriacao = DateTime.UtcNow,
+            DataDeAlteracao = DateTime.UtcNow
+        };
+
+        await _context.Funcionarios.AddAsync(funcionario);
         await _context.SaveChangesAsync();
 
-        return new ServiceResponse<List<FuncionarioModel>>
+        return new ServiceResponse<FuncionarioResponse>
         {
-            Dados = await GetFuncionariosList(),
+            Dados = ToResponse(funcionario),
             Mensagem = "Funcionário criado com sucesso!"
         };
     }
 
-    public async Task<ServiceResponse<List<FuncionarioModel>>> UpdateFuncionarios(
-        FuncionarioModel modelUpdate,
+    public async Task<ServiceResponse<FuncionarioResponse>> UpdateFuncionarios(
+        FuncionarioRequest request,
         int id)
     {
         var funcionario = await _context.Funcionarios.FindAsync(id);
@@ -73,23 +79,23 @@ public class FuncionarioService : IFuncionarioInterface
         if (funcionario is null)
             return FuncionarioNaoEncontrado();
 
-        funcionario.Nome = modelUpdate.Nome;
-        funcionario.Sobrenome = modelUpdate.Sobrenome;
-        funcionario.Departamento = modelUpdate.Departamento;
-        funcionario.Ativo = modelUpdate.Ativo;
-        funcionario.Turno = modelUpdate.Turno;
+        funcionario.Nome = request.Nome.Trim();
+        funcionario.Sobrenome = request.Sobrenome.Trim();
+        funcionario.Departamento = request.Departamento;
+        funcionario.Turno = request.Turno;
+        funcionario.Ativo = request.Ativo;
         funcionario.DataDeAlteracao = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
-        return new ServiceResponse<List<FuncionarioModel>>
+        return new ServiceResponse<FuncionarioResponse>
         {
-            Dados = await GetFuncionariosList(),
+            Dados = ToResponse(funcionario),
             Mensagem = "Funcionário atualizado com sucesso!"
         };
     }
 
-    public async Task<ServiceResponse<List<FuncionarioModel>>> InativaFuncionario(int id)
+    public async Task<ServiceResponse<FuncionarioResponse>> InativaFuncionario(int id)
     {
         var funcionario = await _context.Funcionarios.FindAsync(id);
 
@@ -101,40 +107,55 @@ public class FuncionarioService : IFuncionarioInterface
 
         await _context.SaveChangesAsync();
 
-        return new ServiceResponse<List<FuncionarioModel>>
+        return new ServiceResponse<FuncionarioResponse>
         {
-            Dados = await GetFuncionariosList(),
+            Dados = ToResponse(funcionario),
             Mensagem = "Funcionário desativado com sucesso!"
         };
     }
 
-    public async Task<ServiceResponse<List<FuncionarioModel>>> DeleteFuncionarios(int id)
+    public async Task<ServiceResponse<bool>> DeleteFuncionarios(int id)
     {
         var funcionario = await _context.Funcionarios.FindAsync(id);
 
         if (funcionario is null)
-            return FuncionarioNaoEncontrado();
+        {
+            return new ServiceResponse<bool>
+            {
+                Dados = false,
+                Mensagem = "Funcionário não foi encontrado!",
+                Sucesso = false
+            };
+        }
 
         _context.Funcionarios.Remove(funcionario);
         await _context.SaveChangesAsync();
 
-        return new ServiceResponse<List<FuncionarioModel>>
+        return new ServiceResponse<bool>
         {
-            Dados = await GetFuncionariosList(),
+            Dados = true,
             Mensagem = "Funcionário deletado com sucesso!"
         };
     }
 
-    private async Task<List<FuncionarioModel>> GetFuncionariosList()
+    private static FuncionarioResponse ToResponse(FuncionarioModel funcionario)
     {
-        return await _context.Funcionarios
-            .AsNoTracking()
-            .ToListAsync();
+        return new FuncionarioResponse
+        {
+            Id = funcionario.Id,
+            Nome = funcionario.Nome,
+            Sobrenome = funcionario.Sobrenome,
+            Departamento = funcionario.Departamento,
+            Ativo = funcionario.Ativo,
+            Turno = funcionario.Turno,
+            DataDeCriacao = funcionario.DataDeCriacao,
+            DataDeAlteracao = funcionario.DataDeAlteracao
+        };
     }
 
-    private static ServiceResponse<List<FuncionarioModel>> FuncionarioNaoEncontrado()
+    private static ServiceResponse<FuncionarioResponse> FuncionarioNaoEncontrado()
     {
-        return new ServiceResponse<List<FuncionarioModel>>
+        return new ServiceResponse<FuncionarioResponse>
         {
             Dados = null,
             Mensagem = "Funcionário não foi encontrado!",
