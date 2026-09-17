@@ -1,18 +1,31 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using WebApi_ASPNETCore.DTOs.Funcionario;
 using WebApi_ASPNETCore.Models;
 
-namespace WebApi_ASPNETCore.Service.FuncionarioService
+namespace WebApi_ASPNETCore.Service.FuncionarioService;
+
+public interface IFuncionarioInterface
 {
-    public interface IFuncionarioInterface
-    {
-        Task<ServiceResponse<List<FuncionarioModel>>> GetFuncionarios(); 
-        Task<ServiceResponse<List<FuncionarioModel>>> CreateFuncionarios(FuncionarioModel modelCreate); 
-        Task<ServiceResponse<FuncionarioModel>> GetFuncionariosById(int id); 
-        Task<ServiceResponse<List<FuncionarioModel>>> UpdateFuncionarios(FuncionarioModel modelUpdate, int id); 
-        Task<ServiceResponse<List<FuncionarioModel>>> DeleteFuncionarios(int id); 
-        Task<ServiceResponse<List<FuncionarioModel>>> InativaFuncionario(int id); 
-    }
+    Task<ServiceResponse<List<FuncionarioResponse>>> GetFuncionarios(
+        CancellationToken cancellationToken);
+
+    Task<ServiceResponse<FuncionarioResponse>> GetFuncionariosById(
+        int id,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResponse<FuncionarioResponse>> CreateFuncionarios(
+        FuncionarioRequest request,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResponse<FuncionarioResponse>> UpdateFuncionarios(
+        FuncionarioRequest request,
+        int id,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResponse<FuncionarioResponse>> InativaFuncionario(
+        int id,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResponse<bool>> DeleteFuncionarios(
+        int id,
+        CancellationToken cancellationToken);
 }
