@@ -1,0 +1,38 @@
+{
+  "name": "WebApi Repository Pattern - .NET 10",
+
+  "image": "mcr.microsoft.com/devcontainers/dotnet:2-10.0",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+
+  "forwardPorts": [
+    8080,
+    1433
+  ],
+
+  "portsAttributes": {
+    "8080": {
+      "label": "Web API",
+      "onAutoForward": "notify"
+    },
+    "1433": {
+      "label": "SQL Server",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "postCreateCommand": "dotnet restore WebApi_Funcionarios/WebApi_ASPNETCore.csproj && dotnet restore WebApi_ASPNETCore.Tests/WebApi_ASPNETCore.Tests.csproj && dotnet tool restore",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+
+  "remoteUser": "vscode"
+}
