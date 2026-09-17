@@ -14,12 +14,13 @@ public class FuncionarioService : IFuncionarioInterface
         _context = context;
     }
 
-    public async Task<ServiceResponse<List<FuncionarioResponse>>> GetFuncionarios()
+    public async Task<ServiceResponse<List<FuncionarioResponse>>> GetFuncionarios(
+        CancellationToken cancellationToken)
     {
         var funcionarios = await _context.Funcionarios
             .AsNoTracking()
             .Select(f => ToResponse(f))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new ServiceResponse<List<FuncionarioResponse>>
         {
@@ -30,11 +31,15 @@ public class FuncionarioService : IFuncionarioInterface
         };
     }
 
-    public async Task<ServiceResponse<FuncionarioResponse>> GetFuncionariosById(int id)
+    public async Task<ServiceResponse<FuncionarioResponse>> GetFuncionariosById(
+        int id,
+        CancellationToken cancellationToken)
     {
         var funcionario = await _context.Funcionarios
             .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.Id == id);
+            .FirstOrDefaultAsync(
+                f => f.Id == id,
+                cancellationToken);
 
         if (funcionario is null)
             return FuncionarioNaoEncontrado();
@@ -47,7 +52,8 @@ public class FuncionarioService : IFuncionarioInterface
     }
 
     public async Task<ServiceResponse<FuncionarioResponse>> CreateFuncionarios(
-        FuncionarioRequest request)
+        FuncionarioRequest request,
+        CancellationToken cancellationToken)
     {
         var funcionario = new FuncionarioModel
         {
@@ -60,8 +66,11 @@ public class FuncionarioService : IFuncionarioInterface
             DataDeAlteracao = DateTime.UtcNow
         };
 
-        await _context.Funcionarios.AddAsync(funcionario);
-        await _context.SaveChangesAsync();
+        await _context.Funcionarios.AddAsync(
+            funcionario,
+            cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new ServiceResponse<FuncionarioResponse>
         {
@@ -72,9 +81,11 @@ public class FuncionarioService : IFuncionarioInterface
 
     public async Task<ServiceResponse<FuncionarioResponse>> UpdateFuncionarios(
         FuncionarioRequest request,
-        int id)
+        int id,
+        CancellationToken cancellationToken)
     {
-        var funcionario = await _context.Funcionarios.FindAsync(id);
+        var funcionario = await _context.Funcionarios
+            .FindAsync([id], cancellationToken);
 
         if (funcionario is null)
             return FuncionarioNaoEncontrado();
@@ -86,7 +97,7 @@ public class FuncionarioService : IFuncionarioInterface
         funcionario.Ativo = request.Ativo;
         funcionario.DataDeAlteracao = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new ServiceResponse<FuncionarioResponse>
         {
@@ -95,9 +106,12 @@ public class FuncionarioService : IFuncionarioInterface
         };
     }
 
-    public async Task<ServiceResponse<FuncionarioResponse>> InativaFuncionario(int id)
+    public async Task<ServiceResponse<FuncionarioResponse>> InativaFuncionario(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var funcionario = await _context.Funcionarios.FindAsync(id);
+        var funcionario = await _context.Funcionarios
+            .FindAsync([id], cancellationToken);
 
         if (funcionario is null)
             return FuncionarioNaoEncontrado();
@@ -105,7 +119,7 @@ public class FuncionarioService : IFuncionarioInterface
         funcionario.Ativo = false;
         funcionario.DataDeAlteracao = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new ServiceResponse<FuncionarioResponse>
         {
@@ -114,9 +128,12 @@ public class FuncionarioService : IFuncionarioInterface
         };
     }
 
-    public async Task<ServiceResponse<bool>> DeleteFuncionarios(int id)
+    public async Task<ServiceResponse<bool>> DeleteFuncionarios(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var funcionario = await _context.Funcionarios.FindAsync(id);
+        var funcionario = await _context.Funcionarios
+            .FindAsync([id], cancellationToken);
 
         if (funcionario is null)
         {
@@ -129,7 +146,8 @@ public class FuncionarioService : IFuncionarioInterface
         }
 
         _context.Funcionarios.Remove(funcionario);
-        await _context.SaveChangesAsync();
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new ServiceResponse<bool>
         {
@@ -138,7 +156,8 @@ public class FuncionarioService : IFuncionarioInterface
         };
     }
 
-    private static FuncionarioResponse ToResponse(FuncionarioModel funcionario)
+    private static FuncionarioResponse ToResponse(
+        FuncionarioModel funcionario)
     {
         return new FuncionarioResponse
         {
@@ -153,7 +172,8 @@ public class FuncionarioService : IFuncionarioInterface
         };
     }
 
-    private static ServiceResponse<FuncionarioResponse> FuncionarioNaoEncontrado()
+    private static ServiceResponse<FuncionarioResponse>
+        FuncionarioNaoEncontrado()
     {
         return new ServiceResponse<FuncionarioResponse>
         {
